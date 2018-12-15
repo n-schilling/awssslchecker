@@ -1,0 +1,73 @@
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-plugin-tracing
+
+custom:
+  ssl_endpoint: https://www.google.com
+  days_till_expiration: 31 # integer value only
+  useSNS: false #only true or false
+  toEmailAddress: mail@domain.de
+
+  # Please to not change
+  SnsTopicName: sns-awssslchecker
+  SnsTopicArn:
+    Fn::Join:
+      - ''
+      - - 'arn:aws:sns:'
+        - Ref: AWS::Region
+        - ":"
+        - Ref: AWS::AccountId
+        - ":"
+        - Fn::GetAtt:
+          - SNSTopicaAwsSslChecker
+          - TopicName
+
+service: awssslchecker
+
+provider:
+  name: aws
+  runtime: java8
+  stage: dev
+  region: eu-central-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - sns:Publish
+      Resource: ${self:custom.SnsTopicArn}
+    - Effect: "Allow"
+      Action:
+        - cloudwatch:PutMetricData
+      Resource: '*'
+  iamManagedPolicies:
+    - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+  tracing: true
+
+package:
+  artifact: build/distributions/awssslchecker.zip
+
+functions:
+  awssslchecker:
+    handler: de.nschilling.awssslchecker.Handler
+    description: Main function to check SSL endpoint
+    memorySize: 256
+    timeout: 30
+    environment:
+      ssl_endpoint: ${self:custom.ssl_endpoint}
+      days_till_expiration: ${self:custom.days_till_expiration}
+      sns_topic_arn: ${self:custom.SnsTopicArn}
+      AWS_XRAY_CONTEXT_MISSING: LOG_ERROR
+      AWS_XRAY_TRACING_NAME: AWSSSLChecker
+      useSNS: ${self:custom.useSNS}
+    events:
+      - schedule: rate(2 hours)
+
+resources:
+  Resources:
+    SNSTopicaAwsSslChecker:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: "AWS SSL Checker SNS Topic"
+        TopicName: ${self:custom.SnsTopicName}
+        Subscription:
+        - Endpoint: ${self:custom.toEmailAddress}
+          Protocol: email

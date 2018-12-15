@@ -1,0 +1,24 @@
+/.gradle/
+/build/
+/.settings/
+/bin/
+.classpath
+.project
+/.serverless/
+.DS_Store
+*.class
+.classpath
+.noGit
+.DS_Store
+/*/.DS_Store
+gradle/
+gradlew
+gradlew.bat
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+.noGit/*
+.noGit

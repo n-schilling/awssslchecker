@@ -1,0 +1,38 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile (
+        'com.amazonaws:aws-lambda-java-core:1.1.0',
+        'com.amazonaws:aws-lambda-java-log4j:1.0.0',
+        'com.amazonaws:aws-java-sdk-sns:1.11.423',
+        'com.amazonaws:aws-xray-recorder-sdk-core:2.0.1',
+        'com.amazonaws:aws-xray-recorder-sdk-aws-sdk-instrumentor:2.0.1',
+        'com.amazonaws:aws-xray-recorder-sdk-aws-sdk:2.0.1',
+        'com.amazonaws:aws-java-sdk-cloudwatch:1.11.468',
+        'com.fasterxml.jackson.core:jackson-core:2.8.5',
+        'com.fasterxml.jackson.core:jackson-databind:2.8.5',
+        'com.fasterxml.jackson.core:jackson-annotations:2.8.5'
+    )
+}
+
+task buildZip(type: Zip) {
+    baseName = "awssslchecker"
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtime
+    }
+}
+
+build.dependsOn buildZip
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
